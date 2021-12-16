@@ -1,13 +1,13 @@
 import asyncio
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request
 from fastapi.responses import ORJSONResponse
 from aiokafka import AIOKafkaProducer
 
 from api.v1 import views
 from core import config
-from services.kafka_producer import kafka_producer
+from services import kafka_producer
 from tracer import tracer
 
 app = FastAPI(
@@ -19,13 +19,13 @@ app = FastAPI(
     default_response_class=ORJSONResponse,
 )
 
-loop = asyncio.get_event_loop()
-
 
 @app.on_event('startup')
 async def startup():
     kafka_producer.kafka_producer = AIOKafkaProducer(
-        loop=loop, client_id=config.PROJECT_NAME, bootstrap_servers=config.KAFKA_BOOTSTRAP_SERVERS
+        loop=asyncio.get_running_loop(),
+        client_id=config.PROJECT_NAME,
+        bootstrap_servers=config.KAFKA_BOOTSTRAP_SERVERS
     )
 
 

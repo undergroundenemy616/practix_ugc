@@ -199,19 +199,21 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./src:/code
+    ports:
+      - "8000:8000"
     env_file:
       - ./.env
     depends_on:
       - broker
+      - connect
     networks:
       - movies_network
 
-  nginx-async-api:
+  nginx-ugc:
     image: nginx:1.19.2
     depends_on:
-      - movies-api
-      - movies-redis
-      - elasticsearch
+      - movies-ugc
+      - broker
     ports:
       - "80:80"
     volumes:
