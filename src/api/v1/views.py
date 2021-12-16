@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
 from auth_grpc.auth_check import check_permission
-from services.kafka_producer import KafkaProducer, get_kafka_producer
+from services.kafka_producer import KafkaProducerAdapter, get_kafka_producer
 
 router = APIRouter()
 
@@ -30,7 +30,7 @@ class View(BaseModel):
 async def collect_view(
         request: Request,
         view: View,
-        kafka_service: KafkaProducer = Depends(get_kafka_producer)):
+        kafka_service: KafkaProducerAdapter = Depends(get_kafka_producer)):
 
     token = request.headers.get('Authorization', None)
     token = token.replace('Bearer ', '')
@@ -40,7 +40,10 @@ async def collect_view(
     login = decoded_token.get('sub', None)
 
     try:
-        await kafka_service.collect_view(user_login=login, **view.dict())
+        await kafka_service.collect_view(request=request, user_login=login, **view.dict())
     except Exception as e:
         raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=f"{e}")
-    return {'status': 'success'}
+    return {
+        'login': login,
+        **view.dict()
+    }
