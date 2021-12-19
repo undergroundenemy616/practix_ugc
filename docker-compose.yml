@@ -238,6 +238,7 @@ services:
       - "9000:9000"
     volumes:
       - ./clickhouse_config/node1:/etc/clickhouse-server
+    command: clickhouse-client --multiquery < /etc/clickhouse-server/create.sql
     depends_on:
       - zookeeper-clickhouse
     networks:
@@ -249,6 +250,7 @@ services:
     hostname: clickhouse-node2
     volumes:
       - ./clickhouse_config/node2:/etc/clickhouse-server
+    command: clickhouse-client --multiquery < /etc/clickhouse-server/create.sql
     depends_on:
       - zookeeper-clickhouse
     networks:
