@@ -6,9 +6,10 @@ from time import sleep
 import logging
 import backoff
 import uuid
+from memory_profiler import profile
 
 logging.basicConfig(level=logging.INFO)
-
+fp=open('memory_profiler.log', 'w+')
 
 class ETL:
     def __init__(self,
@@ -20,7 +21,6 @@ class ETL:
         self.clickhouse_client = clickhouse_client,
         self.clickhouse_table = clickhouse_table
 
-    @measure_memory
     @backoff.on_exception(backoff.expo, ConnectionError)
     def __get_new_messages(self) -> list:
         messages = []
@@ -28,7 +28,6 @@ class ETL:
             messages.append(message)
         return messages
 
-    @measure_memory
     @backoff.on_exception(backoff.expo, ConnectionError)
     def __load_to_clickhouse(self, objects: list) -> None:
         self.clickhouse_client.execute(
@@ -36,8 +35,8 @@ class ETL:
             objects
         )
 
-    @measure_memory
     @coroutine
+    @profile(stream=fp)
     def extract(self, target):
         while True:
             sleep(5)
@@ -46,8 +45,8 @@ class ETL:
                 logging.info(f'Found {len(new_messages)}')
                 target.send(new_messages)
 
-    @measure_memory
     @coroutine
+    @profile(stream=fp)
     def transform(self, target):
         while True:
             raw_new_messages = (yield)
@@ -61,8 +60,8 @@ class ETL:
                 transformed_messages.append(transformed_message)
             target.send(transformed_messages)
 
-    @measure_memory
     @coroutine
+    @profile(stream=fp)
     def load(self):
         while True:
             transformed_messages = (yield)
