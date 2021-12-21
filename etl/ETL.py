@@ -30,7 +30,7 @@ class ETL:
     @backoff.on_exception(backoff.expo, ConnectionError)
     def __load_to_clickhouse(self, objects: list) -> None:
         self.clickhouse_client.execute(
-            'INSERT INTO {self.clickhouse_table} (id, user_login, film_id, event_time) VALUES',
+            f'INSERT INTO {self.clickhouse_table} (id, user_login, film_id, event_time) VALUES',
             objects
         )
 
@@ -49,7 +49,7 @@ class ETL:
             raw_new_messages = (yield)
             transformed_messages = []
             for message in raw_new_messages:
-                partition_key = message.key.partition('+')
+                partition_key = message.key.partition(b'+')
                 transformed_message = [uuid.uuid4(),
                                        partition_key[0],
                                        partition_key[2],
@@ -66,12 +66,13 @@ class ETL:
 
 if __name__ == '__main__':
     consumer = KafkaConsumer(config('KAFKA_TOPIC'),
-                             bootstrap_servers=[config('BOOTSTRAP_SERVERS')],
-                             auto_offset_reset=config('earliest'),
+                             bootstrap_servers=[config('KAFKA_BOOTSTRAP_SERVERS')],
+                             auto_offset_reset=config('AUTO_OFFSET_RESET'),
+                             api_version=(0, 11, 5),
                              group_id=config('CONSUMER_GROUP')
                              )
-    client = Client(config('CLICKHOUSE_HOST'))
-
+    client = Client(host=config('CLICKHOUSE_HOST1'), port=config('CLICKHOUSE_PORT1'),
+                    alt_hosts=f'{config("CLICKHOUSE_HOST2")}:{config("CLICKHOUSE_PORT2")}')
     etl = ETL(kafka_consumer=consumer,
               clickhouse_client=client,
               clickhouse_table=config('CLICKHOUSE_TABLE')
