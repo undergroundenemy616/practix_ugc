@@ -1,4 +1,4 @@
-from utils import coroutine
+from utils import coroutine, measure_memory
 from kafka import KafkaConsumer
 from decouple import config
 from clickhouse_driver import Client
@@ -20,6 +20,7 @@ class ETL:
         self.clickhouse_client = clickhouse_client,
         self.clickhouse_table = clickhouse_table
 
+    @measure_memory
     @backoff.on_exception(backoff.expo, ConnectionError)
     def __get_new_messages(self) -> list:
         messages = []
@@ -27,6 +28,7 @@ class ETL:
             messages.append(message)
         return messages
 
+    @measure_memory
     @backoff.on_exception(backoff.expo, ConnectionError)
     def __load_to_clickhouse(self, objects: list) -> None:
         self.clickhouse_client.execute(
@@ -34,6 +36,7 @@ class ETL:
             objects
         )
 
+    @measure_memory
     @coroutine
     def extract(self, target):
         while True:
@@ -43,6 +46,7 @@ class ETL:
                 logging.info(f'Found {len(new_messages)}')
                 target.send(new_messages)
 
+    @measure_memory
     @coroutine
     def transform(self, target):
         while True:
@@ -57,6 +61,7 @@ class ETL:
                 transformed_messages.append(transformed_message)
             target.send(transformed_messages)
 
+    @measure_memory
     @coroutine
     def load(self):
         while True:
