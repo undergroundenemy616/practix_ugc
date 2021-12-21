@@ -28,7 +28,7 @@ class KafkaProducerAdapter:
                 await self.producer.start()
                 timestamp_unix = round(time.mktime(timestamp.timetuple()))
                 value_json = str(timestamp_unix).encode('utf-8')
-                key_json = json.dumps(f'{user_login}+{film_id}').encode('utf-8')
+                key_json = f'{user_login}+{film_id}'.encode('utf-8')
                 await self.producer.send_and_wait(topic=self.views_topic, value=value_json, key=key_json)
 
                 span.set_tag('result_status', 'ok')
