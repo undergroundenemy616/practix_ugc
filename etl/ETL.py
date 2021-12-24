@@ -11,6 +11,7 @@ from memory_profiler import profile
 logging.basicConfig(level=logging.INFO)
 fp=open('memory_profiler.log', 'w+')
 
+
 class ETL:
     def __init__(self,
                  kafka_consumer: KafkaConsumer,

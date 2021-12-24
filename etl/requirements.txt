@@ -2,4 +2,4 @@ clickhouse-driver==0.2.2
 kafka-python==2.0.2
 backoff==1.11.1
 python-decouple==3.5
-memory_profiler
+memory_profiler==0.60.0
