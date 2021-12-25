@@ -1,4 +1,4 @@
-from utils import coroutine
+from utils import coroutine, measure_memory
 from kafka import KafkaConsumer
 from decouple import config
 from clickhouse_driver import Client
@@ -6,8 +6,10 @@ from time import sleep
 import logging
 import backoff
 import uuid
+from memory_profiler import profile
 
 logging.basicConfig(level=logging.INFO)
+fp=open('memory_profiler.log', 'w+')
 
 
 class ETL:
@@ -35,6 +37,7 @@ class ETL:
         )
 
     @coroutine
+    @profile(stream=fp)
     def extract(self, target):
         while True:
             sleep(5)
@@ -44,6 +47,7 @@ class ETL:
                 target.send(new_messages)
 
     @coroutine
+    @profile(stream=fp)
     def transform(self, target):
         while True:
             raw_new_messages = (yield)
@@ -58,6 +62,7 @@ class ETL:
             target.send(transformed_messages)
 
     @coroutine
+    @profile(stream=fp)
     def load(self):
         while True:
             transformed_messages = (yield)

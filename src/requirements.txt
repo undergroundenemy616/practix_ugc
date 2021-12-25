@@ -10,3 +10,4 @@ opentracing==2.4.0
 jaeger-client==4.8.0
 aiokafka==0.6.0
 pyjwt==2.3.0
+memory_profiler==0.60.0

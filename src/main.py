@@ -1,14 +1,17 @@
 import asyncio
 
 import uvicorn
+from aiokafka import AIOKafkaProducer
 from fastapi import FastAPI, Request
 from fastapi.responses import ORJSONResponse
-from aiokafka import AIOKafkaProducer
+from memory_profiler import profile
 
 from api.v1 import views
 from core import config
 from services import kafka_producer
 from tracer import tracer
+
+fp = open('memory_profiler.log', 'w+')
 
 app = FastAPI(
     docs_url='/api/openapi',
@@ -21,11 +24,12 @@ app = FastAPI(
 
 
 @app.on_event('startup')
+@profile(stream=fp)
 async def startup():
     kafka_producer.kafka_producer = AIOKafkaProducer(
         loop=asyncio.get_running_loop(),
         client_id=config.PROJECT_NAME,
-        bootstrap_servers=config.KAFKA_BOOTSTRAP_SERVERS
+        bootstrap_servers=config.KAFKA_BOOTSTRAP_SERVERS,
     )
 
 
