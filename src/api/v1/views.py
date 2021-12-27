@@ -26,7 +26,7 @@ class View(BaseModel):
     response_description="возвращается статус код",
     tags=['views'],
 )
-# @check_permission(roles=["Subscriber"])
+@check_permission(roles=["Subscriber"])
 async def collect_view(
     request: Request,
     view: View,
