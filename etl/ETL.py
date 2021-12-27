@@ -1,13 +1,14 @@
-from datetime import datetime
-from utils import coroutine, measure_memory
-from kafka import KafkaConsumer
-from decouple import config
-from clickhouse_driver import Client
-from time import sleep
 import logging
-import backoff
 import uuid
+from datetime import datetime
+from time import sleep
+
+import backoff
+from clickhouse_driver import Client
+from decouple import config
+from kafka import KafkaConsumer
 from memory_profiler import profile
+from utils import coroutine
 
 logging.basicConfig(level=logging.INFO)
 fp = open('memory_profiler.log', 'w+')
@@ -20,7 +21,7 @@ class ETL:
                                             auto_offset_reset=config('AUTO_OFFSET_RESET'),
                                             api_version=(0, 11, 5),
                                             group_id=config('CONSUMER_GROUP'),
-                                            auto_commit_interval_ms=10,
+                                            enable_auto_commit=False,
                                             consumer_timeout_ms=5000,
                                             )
         self.clickhouse_client = Client(host=config('CLICKHOUSE_HOST1'), port=config('CLICKHOUSE_PORT1'),
@@ -33,6 +34,8 @@ class ETL:
         messages = []
         for message in self.kafka_consumer:
             messages.append(message)
+            if len(messages) > 500:
+                break
         return messages
 
     @backoff.on_exception(backoff.expo, ConnectionError)
@@ -73,6 +76,7 @@ class ETL:
         while True:
             transformed_messages = (yield)
             self.__load_to_clickhouse(transformed_messages)
+            self.kafka_consumer.commit()
 
 
 if __name__ == '__main__':

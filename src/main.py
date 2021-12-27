@@ -16,9 +16,9 @@ fp = open('memory_profiler.log', 'w+')
 app = FastAPI(
     docs_url='/api/openapi',
     openapi_url='/api/openapi.json',
-    title="UGC API для онлайн-кинотеатра",
-    description="Сервис для работы с данными для аналитики Онлайн-кинотеатра",
-    version="1.0.0",
+    title='UGC API для онлайн-кинотеатра',
+    description='Сервис для работы с данными для аналитики Онлайн-кинотеатра',
+    version='1.0.0',
     default_response_class=ORJSONResponse,
 )
 
@@ -33,7 +33,7 @@ async def startup():
     )
 
 
-@app.middleware("http")
+@app.middleware('http')
 async def add_tracing(request: Request, call_next):
     request_id = request.headers.get('X-Request-Id')
     if not request_id:

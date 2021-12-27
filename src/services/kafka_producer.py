@@ -1,4 +1,4 @@
-import json
+import logging
 import time
 import uuid
 from datetime import datetime
@@ -6,8 +6,9 @@ from typing import Optional
 
 import backoff as backoff
 from aiokafka import AIOKafkaProducer
-from core import config
 from fastapi import Request
+
+from core import config
 from tracer import tracer
 
 kafka_producer: Optional[AIOKafkaProducer] = None
@@ -37,7 +38,7 @@ class KafkaProducerAdapter:
 
                 span.set_tag('result_status', 'ok')
             except Exception as e:
-                print(e)
+                logging.exception(f'{e}')
                 span.set_tag('result_status', f'Error: {e}')
 
             finally:
