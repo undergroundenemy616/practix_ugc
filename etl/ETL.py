@@ -1,3 +1,4 @@
+from datetime import datetime
 from utils import coroutine, measure_memory
 from kafka import KafkaConsumer
 from decouple import config
@@ -9,18 +10,23 @@ import uuid
 from memory_profiler import profile
 
 logging.basicConfig(level=logging.INFO)
-fp=open('memory_profiler.log', 'w+')
+fp = open('memory_profiler.log', 'w+')
 
 
 class ETL:
-    def __init__(self,
-                 kafka_consumer: KafkaConsumer,
-                 clickhouse_client: Client,
-                 clickhouse_table: str):
-
-        self.kafka_consumer = kafka_consumer,
-        self.clickhouse_client = clickhouse_client,
-        self.clickhouse_table = clickhouse_table
+    def __init__(self):
+        self.kafka_consumer = KafkaConsumer(config('KAFKA_TOPIC'),
+                                            bootstrap_servers=[config('KAFKA_BOOTSTRAP_SERVERS')],
+                                            auto_offset_reset=config('AUTO_OFFSET_RESET'),
+                                            api_version=(0, 11, 5),
+                                            group_id=config('CONSUMER_GROUP'),
+                                            auto_commit_interval_ms=10,
+                                            consumer_timeout_ms=5000,
+                                            )
+        self.clickhouse_client = Client(host=config('CLICKHOUSE_HOST1'), port=config('CLICKHOUSE_PORT1'),
+                                        alt_hosts=f'{config("CLICKHOUSE_HOST2")}:{config("CLICKHOUSE_PORT2")}'
+                                        )
+        self.clickhouse_table = config('CLICKHOUSE_TABLE')
 
     @backoff.on_exception(backoff.expo, ConnectionError)
     def __get_new_messages(self) -> list:
@@ -55,9 +61,9 @@ class ETL:
             for message in raw_new_messages:
                 partition_key = message.key.partition(b'+')
                 transformed_message = [uuid.uuid4(),
-                                       partition_key[0],
-                                       partition_key[2],
-                                       message.value]
+                                       partition_key[0].decode('utf-8'),
+                                       uuid.UUID(partition_key[2].decode('utf-8')),
+                                       datetime.utcfromtimestamp(int(message.value))]
                 transformed_messages.append(transformed_message)
             target.send(transformed_messages)
 
@@ -70,19 +76,8 @@ class ETL:
 
 
 if __name__ == '__main__':
-    consumer = KafkaConsumer(config('KAFKA_TOPIC'),
-                             bootstrap_servers=[config('KAFKA_BOOTSTRAP_SERVERS')],
-                             auto_offset_reset=config('AUTO_OFFSET_RESET'),
-                             api_version=(0, 11, 5),
-                             group_id=config('CONSUMER_GROUP')
-                             )
-    client = Client(host=config('CLICKHOUSE_HOST1'), port=config('CLICKHOUSE_PORT1'),
-                    alt_hosts=f'{config("CLICKHOUSE_HOST2")}:{config("CLICKHOUSE_PORT2")}')
-    etl = ETL(kafka_consumer=consumer,
-              clickhouse_client=client,
-              clickhouse_table=config('CLICKHOUSE_TABLE')
-              )
 
+    etl = ETL()
     logging.info("Let's go")
     load_process = etl.load()
     transform_process = etl.transform(load_process)
