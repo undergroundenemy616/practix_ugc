@@ -1,10 +1,13 @@
 import asyncio
 
 import uvicorn
+import sentry_sdk
 from aiokafka import AIOKafkaProducer
 from fastapi import FastAPI, Request
 from fastapi.responses import ORJSONResponse
 from memory_profiler import profile
+from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
+
 
 from api.v1 import views
 from core import config
@@ -21,6 +24,8 @@ app = FastAPI(
     version='1.0.0',
     default_response_class=ORJSONResponse,
 )
+
+sentry_sdk.init(dsn=config.SENTRY_DSN)
 
 
 @app.on_event('startup')
@@ -49,6 +54,7 @@ async def add_tracing(request: Request, call_next):
 
 
 app.include_router(views.router, prefix='/api/v1/views', tags=['views'])
+app.add_middleware(SentryAsgiMiddleware)
 
 if __name__ == '__main__':
     uvicorn.run(
