@@ -9,6 +9,10 @@ filebeat.inputs:
     keys_under_root: true
     add_error_key: true
 
+processors:
+  - add_tags:
+      tags: ['ugc']
+
 output.logstash:
   enabled: true
   hosts: ["logstash-elk:5045"]
