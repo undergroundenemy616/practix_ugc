@@ -1,4 +1,5 @@
-# practix_ugc
+# Стек:
+Python, Fast Api, Reids, Kafka, ClickHouse, MongoDB, Nginx, Docker, Gunicorn.
 
 Этот сервис разрешает пользователям создавать свой контент в нашем кинотеатре — оставлять лайки, комментарии, отзывы к фильмам. 
 
