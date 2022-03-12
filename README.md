@@ -26,7 +26,7 @@ clickhouse-client --multiquery < /etc/clickhouse-server/create.sql
 ```
 
 Репозиторий Auth:
-https://github.com/KonstantinChernov/practix_auth
+https://github.com/undergroundenemy616/practix_auth
 
 ## Схема взаимодействия сервисов:
 ![Image alt](https://github.com/KonstantinChernov/practix_ugc/blob/master/scheme.jpg)
